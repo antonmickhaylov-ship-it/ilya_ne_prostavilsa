@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧃 Поводы Ильи</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .add-reason {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 80px;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            resize: none;
+        }
+        
+        button {
+            width: 100%;
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3dbcb4;
+        }
+        
+        .reason-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            border-left: 4px solid #4ecdc4;
+        }
+        
+        .reason-text {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .reason-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+
+        .admin-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .admin-btn {
+            background: #ff6b6b;
+            margin: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧃 Поводы Ильи</h1>
+        
+        <div class="add-reason">
+            <textarea id="reasonText" placeholder="Введите повод, за который Илья не проставился..."></textarea>
+            <button onclick="addReason()">➕ Добавить повод</button>
+        </div>
+        
+        <div id="reasonsList">
+            <div class="empty">Загрузка поводов...</div>
+        </div>
+
+        <div class="admin-panel">
+            <button class="admin-btn" onclick="clearAllData()">🗑️ Очистить все (админ)</button>
+            <button class="admin-btn" onclick="exportData()">📤 Экспорт данных</button>
+        </div>
+    </div>
+
+    <script>
+        // Загружаем поводы при открытии
+        loadReasons();
+        
+        // Функция добавления повода
+        function addReason() {
+            const reasonText = document.getElementById('reasonText').value.trim();
+            
+            if (!reasonText) {
+                alert('Введите повод!');
+                return;
+            }
+            
+            // Сохраняем в localStorage
+            let reasons = JSON.parse(localStorage.getItem('ilya_reasons') || '[]');
+            
+            // Добавляем новый повод
+            reasons.push({
+                text: reasonText,
+                date: new Date().toLocaleString('ru-RU'),
+                author: 'Коллега'
+            });
+            
+            // Сохраняем обратно
+            localStorage.setItem('ilya_reasons', JSON.stringify(reasons));
+            
+            // Очищаем поле и обновляем список
+            document.getElementById('reasonText').value = '';
+            loadReasons();
+            
+            alert('✅ Повод добавлен!');
+        }
+        
+        // Функция загрузки поводов
+        function loadReasons() {
+            const reasons = JSON.parse(localStorage.getItem('ilya_reasons') || '[]');
+            const list = document.getElementById('reasonsList');
+            
+            if (reasons.length === 0) {
+                list.innerHTML = '<div class="empty">Пока нет поводов. Будьте первым! 😴</div>';
+                return;
+            }
+            
+            // Показываем поводы (новые сверху)
+            list.innerHTML = reasons.slice().reverse().map(reason => `
+                <div class="reason-item">
+                    <div class="reason-text">${reason.text}</div>
+                    <div class="reason-meta">
+                        <span>👤 ${reason.author}</span>
+                        <span>📅 ${reason.date}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Админские функции
+        function clearAllData() {
+            if (confirm('Точно очистить ВСЕ поводы?')) {
+                localStorage.removeItem('ilya_reasons');
+                loadReasons();
+                alert('Все поводы очищены!');
+            }
+        }
+
+        function exportData() {
+            const reasons = JSON.parse(localStorage.getItem('ilya_reasons') || '[]');
+            const dataStr = JSON.stringify(reasons, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'поводы_ильи.json';
+            a.click();
+        }
+        
+        // Автообновление каждые 10 секунд
+        setInterval(loadReasons, 10000);
+    </script>
+</body>
+</html>
